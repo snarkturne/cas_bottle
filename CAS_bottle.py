@@ -29,7 +29,7 @@ session_opts = {
 app = SessionMiddleware(bottle.app(), session_opts)
 
 # Create the plugin
-auth=CAS_bottle.CASAuth(cas_server="https://your.cas.sever", #<= Your CAS server
+auth=CAS_bottle.CASAuth(cas_server="https://your.cas.sever/cas", #<= Your CAS server
                         service_url="http://localhost:8080/login")
 
 # Some callbacks require auth, some dont.
@@ -77,7 +77,7 @@ bottle.run(app, host='localhost', port=8080,debug= True, reloader=True)
 
 If you just want to use CAS authentification for all pages :
     
-auth=CAS_bottle.CASAuth(cas_server="https://your.cas.sever", #<= Your CAS server
+auth=CAS_bottle.CASAuth(cas_server="https://your.cas.sever/cas", #<= Your CAS server
                         service_url="http://localhost:8080/login")
 bottle.install(auth)
 
