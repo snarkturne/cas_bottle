@@ -159,7 +159,7 @@ def _TestCASAuth(user) :
     
 def _CASLogout(cas_server,service_url):
     session=_getsession()
-    cas_logout=cas_server + "/cas/logout?service=" + service_url
+    cas_logout=cas_server + "/logout?service=" + service_url
     _pdebug("Cas Logout : ",cas_logout,"user=",session.get('user',None))
     session['user']=None
     session.save()
@@ -180,7 +180,7 @@ def _CASAuth(cas_server,service_url):
         ticket = bottle.request.params["ticket"]
         _pdebug("Ticket",ticket)
         #generate URL for ticket validation 
-        cas_validate = cas_server + "/cas/serviceValidate?ticket=" + ticket + "&service=" + service_url
+        cas_validate = cas_server + "/serviceValidate?ticket=" + ticket + "&service=" + service_url
         _pdebug("Opening : ",cas_validate)
         f_xml_assertion = urllib.request.urlopen(cas_validate)
         if not f_xml_assertion:
@@ -225,5 +225,5 @@ def _CASAuth(cas_server,service_url):
         else :
             session["redirect_url"]=bottle.request.url
         session.save()
-        bottle.redirect(cas_server + "/cas/login?service=" + service_url)
+        bottle.redirect(cas_server + "/login?service=" + service_url)
         
