@@ -87,8 +87,7 @@ Debug mode :
 CAS_bottle.debug=True # You will get hints about what's happening on stdout
 """
 import bottle
-import urllib.request
-import xml.etree.ElementTree
+import six
 from functools import wraps
 
 debug=False
@@ -138,7 +137,7 @@ class CASAuth :
     
          
 def _pdebug(*kwargs) :
-    if debug : print("== CAS ==>",*kwargs)
+    if debug : six.print_("== CAS ==>",*kwargs)
     
 def _getsession() :
     session=bottle.request.environ.get('beaker.session',None)
@@ -180,26 +179,17 @@ def _CASAuth(cas_server,service_url):
         ticket = bottle.request.params["ticket"]
         _pdebug("Ticket",ticket)
         #generate URL for ticket validation 
-        cas_validate = cas_server + "/serviceValidate?ticket=" + ticket + "&service=" + service_url
+        cas_validate = cas_server + "/validate?ticket=" + ticket + "&service=" + service_url
         _pdebug("Opening : ",cas_validate)
-        f_xml_assertion = urllib.request.urlopen(cas_validate)
-        if not f_xml_assertion:
+        f_txt_assertion = six.moves.urllib.request.urlopen(cas_validate)
+        if not f_txt_assertion:
             bottle.abort(401, 'Unable to authenticate: trouble retrieving assertion from CAS to validate ticket.')
 
-        #parse CAS XML assertion into a ElementTree
-        assertion_tree = xml.etree.ElementTree.parse(f_xml_assertion)
-        if not assertion_tree:
-            bottle.abort(401, 'Unable to authenticate: trouble parsing XML assertion.')
-
-        user_name=None
-        #find <cas:user> in ElementTree
-        for e in assertion_tree.iter():
-            if e.tag != "{http://www.yale.edu/tp/cas}user":
-                continue
-            user_name = e.text
-        if not user_name:
-            #couldn't find <cas:user> in the tree
-            bottle.abort(401, 'Unable to validate ticket: could not locate cas:user element.')
+        #break apart text validation response
+        valid_ticket, user_name = (line.strip().decode('utf-8') for line in f_txt_assertion.readlines())
+        _pdebug("Valid Ticket : ",valid_ticket)
+        if not valid_ticket == 'yes':
+            bottle.abort(401, 'Unable to authenticate: invalid or expired ticket.')
     
         #add username to session
         session['user'] = user_name

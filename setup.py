@@ -10,7 +10,8 @@ setup(
     author_email = 'snarkturne@gmail.com',
     requires = [
         'bottle (>=0.9)',
-        'beaker'
+        'beaker',
+        'six',
     ],
     classifiers = [
         'Environment :: Web Environment',
