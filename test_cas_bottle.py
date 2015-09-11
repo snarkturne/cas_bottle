@@ -12,7 +12,7 @@ session_opts = {
 app = SessionMiddleware(bottle.app(), session_opts)
 
 # Create the plugin
-auth=CAS_bottle.CASAuth(cas_server="https://your.cas.server", #<= Your CAS server
+auth=CAS_bottle.CASAuth(cas_server="https://your.cas.server/cas", #<= Your CAS server
                         service_url="http://localhost:8080/login")
 # If some callbacks require auth, and some dont.
 # use apply=[auth] as a @route parameter to force CAS authentification

@@ -30,7 +30,7 @@ session_opts = {
 app = SessionMiddleware(bottle.app(), session_opts)
 
 # Create the plugin
-auth=CAS_bottle.CASAuth(cas_server="https://your.cas.sever", #<= Your CAS server
+auth=CAS_bottle.CASAuth(cas_server="https://your.cas.sever/cas", #<= Your CAS server
                         service_url="http://localhost:8080/login")
 
 # Some callbacks require auth, some dont.
@@ -78,7 +78,7 @@ bottle.run(app, host='localhost', port=8080,debug= True, reloader=True)
 
 If you just want to use CAS authentification for all pages :
     
-auth=CAS_bottle.CASAuth(cas_server="https://your.cas.sever", #<= Your CAS server
+auth=CAS_bottle.CASAuth(cas_server="https://your.cas.sever/cas", #<= Your CAS server
                         service_url="http://localhost:8080/login")
 bottle.install(auth)
 
@@ -88,8 +88,7 @@ Debug mode :
 CAS_bottle.debug=True # You will get hints about what's happening on stdout
 """
 import bottle
-import urllib.request
-import xml.etree.ElementTree
+import six
 from functools import wraps
 
 debug=False
@@ -139,7 +138,7 @@ class CASAuth :
     
          
 def _pdebug(*kwargs) :
-    if debug : print("== CAS ==>",*kwargs)
+    if debug : six.print_("== CAS ==>",*kwargs)
     
 def _getsession() :
     session=bottle.request.environ.get('beaker.session',None)
@@ -160,7 +159,7 @@ def _TestCASAuth(user) :
     
 def _CASLogout(cas_server,service_url):
     session=_getsession()
-    cas_logout=cas_server + "/cas/logout?service=" + service_url
+    cas_logout=cas_server + "/logout?service=" + service_url
     _pdebug("Cas Logout : ",cas_logout,"user=",session.get('user',None))
     session['user']=None
     session.save()
@@ -181,26 +180,17 @@ def _CASAuth(cas_server,service_url):
         ticket = bottle.request.params["ticket"]
         _pdebug("Ticket",ticket)
         #generate URL for ticket validation 
-        cas_validate = cas_server + "/cas/serviceValidate?ticket=" + ticket + "&service=" + service_url
+        cas_validate = cas_server + "/validate?ticket=" + ticket + "&service=" + service_url
         _pdebug("Opening : ",cas_validate)
-        f_xml_assertion = urllib.request.urlopen(cas_validate)
-        if not f_xml_assertion:
+        f_txt_assertion = six.moves.urllib.request.urlopen(cas_validate)
+        if not f_txt_assertion:
             bottle.abort(401, 'Unable to authenticate: trouble retrieving assertion from CAS to validate ticket.')
 
-        #parse CAS XML assertion into a ElementTree
-        assertion_tree = xml.etree.ElementTree.parse(f_xml_assertion)
-        if not assertion_tree:
-            bottle.abort(401, 'Unable to authenticate: trouble parsing XML assertion.')
-
-        user_name=None
-        #find <cas:user> in ElementTree
-        for e in assertion_tree.iter():
-            if e.tag != "{http://www.yale.edu/tp/cas}user":
-                continue
-            user_name = e.text
-        if not user_name:
-            #couldn't find <cas:user> in the tree
-            bottle.abort(401, 'Unable to validate ticket: could not locate cas:user element.')
+        #break apart text validation response
+        valid_ticket, user_name = (line.strip().decode('utf-8') for line in f_txt_assertion.readlines())
+        _pdebug("Valid Ticket : ",valid_ticket)
+        if not valid_ticket == 'yes':
+            bottle.abort(401, 'Unable to authenticate: invalid or expired ticket.')
     
         #add username to session
         session['user'] = user_name
@@ -226,5 +216,5 @@ def _CASAuth(cas_server,service_url):
         else :
             session["redirect_url"]=bottle.request.url
         session.save()
-        bottle.redirect(cas_server + "/cas/login?service=" + service_url)
+        bottle.redirect(cas_server + "/login?service=" + service_url)
         
