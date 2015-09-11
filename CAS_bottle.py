@@ -4,7 +4,8 @@ CAS module for bottle
 History : 
    Original module for Cherrypy developped by : James Macdonell and Marc Santoro 
    Bottle Adaptation : SnarkTurne
-   
+
+2013-08-27 : Typos corrections, bug correction in the  TestCASAuth method   
 2013-07-16 : Converted to a real bottle plugin
 2013-07-08 : Added redirection to the requested URL (steps 1 & 2 in CASAuth)
 2013-07-03 : Bottle decorator 
@@ -92,7 +93,7 @@ import xml.etree.ElementTree
 from functools import wraps
 
 debug=False
-version=1.0
+version=1.1
 
 class CASAuth :
     api=2
@@ -111,8 +112,8 @@ class CASAuth :
         """ 
         No more CAS Auth. 
         Instead, user is authenticated as : username
-        Only user this to test and debug your app
-        Call test_with_username(None) to user CAS again
+        Only use this to test and debug your app
+        Call test_with_username(None) to use CAS again
         """
         self.testusername=username
     
@@ -149,7 +150,7 @@ def _getsession() :
 def _TestCASAuth(user) :
     session=_getsession()
     if session.get('user'):
-        _pdebug("Test User session",session.get['user'])
+        _pdebug("Test User session",session.get('user'))
         session['validated_by'] = "session attribute"
     else :
         _pdebug("Test User",user)

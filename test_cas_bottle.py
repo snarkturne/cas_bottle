@@ -14,10 +14,12 @@ app = SessionMiddleware(bottle.app(), session_opts)
 # Create the plugin
 auth=CAS_bottle.CASAuth(cas_server="https://your.cas.server", #<= Your CAS server
                         service_url="http://localhost:8080/login")
-bottle.install(auth)
-# Some callbacks require auth, some dont.
+# If some callbacks require auth, and some dont.
 # use apply=[auth] as a @route parameter to force CAS authentification
 # Any callback can get the username (None if user is not authentified)
+
+# Instead, use : bottle.install(auth) if you want authentification on for all 
+# callbacks
 
 @route(['/index','/'])
 def index() :
@@ -39,7 +41,7 @@ def authornot() :
     if not username : stri+=" Anonymous access"
     return stri
 
-@route('/authforced') 
+@route('/authforced',apply=[auth]) 
 def authforced() :
     username=auth.username()
     stri="You accessed this page with login : {}.".format(username)
@@ -51,7 +53,7 @@ def logout() :
     auth.logout()
     return ""
 
-@route('/login')
+@route('/login',apply=[auth])
 def login() :
     bottle.redirect('/index')
 
