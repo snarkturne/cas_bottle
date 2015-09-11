@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name='CAS_bottle',
-    version='1.0',
+    version='1.1',
     packages=['',],
     url = 'http://github.com/snarkturne/cas_bottle/',
     description = '',
